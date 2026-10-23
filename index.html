@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#3B8ED0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎱</text></svg>">
 <title>快乐8双池科学推算 · 手机版</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -237,7 +238,7 @@ textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid 
 <script>
 "use strict";
 /* KL8 双池科学推算 手机版计算核心 — 由桌面 V24.8 逐函数移植 (纯函数, 无DOM) */
-const MODEL_VERSION = "V24.12-Mobile";
+const MODEL_VERSION = "V24.13-Mobile";
 const RESONANCE_BONUS_Z = 0.30, DUAL_POOL_BOOST = 1.25, RESONANCE_BOOST = 1.50;
 const VOLATILE_BIAS_THRESHOLD = 4.0, VOLATILE_SUM_HIGH = 845, VOLATILE_SUM_LOW = 775;
 const DEFAULT_SYSTEM_CONFIG = {
@@ -1223,15 +1224,16 @@ function refreshDataHeads(){
 const SYNC_TARGETS = [
   ['直连 https', 'https://data.17500.cn/kl8_desc.txt'],
   ['直连 http', 'http://data.17500.cn/kl8_desc.txt'],
-  ['中转 allorigins', 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://data.17500.cn/kl8_desc.txt')],
-  ['中转 codetabs', 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://data.17500.cn/kl8_desc.txt')],
 ];
 async function fetchDraws(url){
-  const resp = await fetch(url, {cache: 'no-store'});
+  const resp = await fetch(url, {cache: 'no-store', referrerPolicy: 'no-referrer'});
   if(!resp.ok) throw new Error('HTTP ' + resp.status);
   const buf = await resp.arrayBuffer();
-  let rows = parse17500(new TextDecoder('gbk').decode(buf));
+  const gbk = new TextDecoder('gbk').decode(buf);
+  let rows = parse17500(gbk);
   if(!rows.length) rows = parse17500(new TextDecoder('utf-8').decode(buf));
+  if(!rows.length && gbk.indexOf('<') >= 0 && gbk.indexOf('>') > 0)
+    throw new Error('被数据源以网页形式拦截 (非数据)');
   return rows;
 }
 async function syncData(manual){
@@ -1241,8 +1243,12 @@ async function syncData(manual){
   try{
     if(manual) logLine(log, '☁ 正在拉取全量历史 (直连→中转依次尝试)…', 'c-reason');
     let rows = null, via = ''; const errs = [];
-    const targets = /^https?:$/.test(location.protocol)
-      ? [['本机服务取数', 'kl8data']].concat(SYNC_TARGETS) : SYNC_TARGETS;
+    let targets = SYNC_TARGETS;
+    if(/^https?:$/.test(location.protocol)){
+      targets = (location.hostname === '127.0.0.1' || location.hostname === 'localhost')
+        ? [['本机服务取数', 'kl8data']].concat(SYNC_TARGETS) : SYNC_TARGETS.slice();
+      if(location.protocol === 'https:') targets = targets.filter(t => t[1].indexOf('http://') !== 0);
+    }
     for(const [name, u] of targets){
       try{
         const r = await fetchDraws(u);
@@ -1264,7 +1270,7 @@ async function syncData(manual){
   }catch(e){
     logLine(log, `⚠️ 同步失败, 继续使用本地数据 (共${DRAWS.length}期)`, 'c-fail');
     logLine(log, '详情: ' + e.message, 'c-faint');
-    logLine(log, 'ℹ️ 已定性: 17500 对本地页面 (来源 null) 不下发跨域允许头, 直连必然被浏览器拦截 (请求返回 200 也读不到); 中转通道取决于公共服务当时是否可用。保底办法: 数据页「📋 粘贴同步」或「⬆ 导入数据」, 与同步等效。', 'c-warn');
+    logLine(log, 'ℹ️ 同步受阻时看上方「详情」逐条原因。保底办法: 数据页「📋 粘贴同步」或「⬆ 导入数据」, 与同步等效; 或改用 Termux 版 (服务器代取数, 不经浏览器)。', 'c-warn');
     if(manual) toast('同步失败, 已用本地数据');
   }finally{ BUSY = false; }
 }
