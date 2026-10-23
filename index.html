@@ -52,6 +52,8 @@ line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .c-header{font-weight:700}.c-success{color:var(--ok)}.c-hot{color:var(--hot);font-weight:600}
 .c-new{color:var(--blue);font-weight:600}.c-drop{color:var(--bad)}.c-reason{color:var(--muted)}
 .c-warn{color:var(--warn);font-weight:600}.c-fail{color:var(--bad);font-weight:600}
+#planBox{max-height:48vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#planBox:empty{display:none}
 .plan{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--input)}
 .plan .gname{font-size:14px;color:var(--muted);margin-bottom:4px}
 .plan .nums{font-size:18px;font-weight:700;letter-spacing:.4px;font-variant-numeric:tabular-nums}
@@ -238,7 +240,7 @@ textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid 
 <script>
 "use strict";
 /* KL8 双池科学推算 手机版计算核心 — 由桌面 V24.8 逐函数移植 (纯函数, 无DOM) */
-const MODEL_VERSION = "V24.14-Mobile";
+const MODEL_VERSION = "V24.15-Mobile";
 const RESONANCE_BONUS_Z = 0.30, DUAL_POOL_BOOST = 1.25, RESONANCE_BOOST = 1.50;
 const VOLATILE_BIAS_THRESHOLD = 4.0, VOLATILE_SUM_HIGH = 845, VOLATILE_SUM_LOW = 775;
 const DEFAULT_SYSTEM_CONFIG = {
@@ -1446,11 +1448,10 @@ async function runCalc(dry){
         const bets = res.combos.map(x => x.combo);
         if(bets.length){
           logLine(log, `⚔️ 复式降维实投 ${bets.length} 注`, 'c-header');
-          res.combos.slice(0, 2).forEach((it, i) => {
+          res.combos.forEach((it, i) => {
             const b = it.breakdown;
-            addPlan('复式矩阵团', it.combo, `尖刀${i + 1} 总分 ${it.score.toFixed(1)} (号码${b.number.toFixed(1)} 共现${b.pmi.toFixed(1)} 间隔${b.gap.toFixed(1)})`);
+            addPlan('复式矩阵团', it.combo, `${i + 1}/${bets.length} 总分 ${it.score.toFixed(1)} (号码${b.number.toFixed(1)} 共现${b.pmi.toFixed(1)} 间隔${b.gap.toFixed(1)})`);
           });
-          if(bets.length > 2) addPlanNote('复式矩阵团', `…其余 ${bets.length - 2} 注见复制清单`);
           groups.push({name: '复式矩阵团', k: actualK, combos: bets});
         } else logLine(log, '⚠️ 复式组合被软惩罚压制, 无实投', 'c-drop');
       }
@@ -1480,11 +1481,10 @@ async function runCalc(dry){
           const bets = res.combos.map(x => x.combo);
           if(bets.length){
             logLine(log, `🧲 [胆拖提货] 输出 ${bets.length} 注`, 'c-header');
-            res.combos.slice(0, 2).forEach((it, i) => {
+            res.combos.forEach((it, i) => {
               const b = it.breakdown;
-              addPlan('胆拖狙击手', it.combo, `尖刀${i + 1} 总分 ${it.score.toFixed(1)} (号码${b.number.toFixed(1)} 共现${b.pmi.toFixed(1)} 间隔${b.gap.toFixed(1)})`);
+              addPlan('胆拖狙击手', it.combo, `${i + 1}/${bets.length} 总分 ${it.score.toFixed(1)} (号码${b.number.toFixed(1)} 共现${b.pmi.toFixed(1)} 间隔${b.gap.toFixed(1)})`);
             });
-            if(bets.length > 2) addPlanNote('胆拖狙击手', `…其余 ${bets.length - 2} 注见复制清单`);
             groups.push({name: '胆拖狙击手', combos: bets});
           } else logLine(log, '⚠️ 胆拖组合在软惩罚下全军覆没', 'c-drop');
         }
