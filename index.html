@@ -238,7 +238,7 @@ textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid 
 <script>
 "use strict";
 /* KL8 双池科学推算 手机版计算核心 — 由桌面 V24.8 逐函数移植 (纯函数, 无DOM) */
-const MODEL_VERSION = "V24.13-Mobile";
+const MODEL_VERSION = "V24.14-Mobile";
 const RESONANCE_BONUS_Z = 0.30, DUAL_POOL_BOOST = 1.25, RESONANCE_BOOST = 1.50;
 const VOLATILE_BIAS_THRESHOLD = 4.0, VOLATILE_SUM_HIGH = 845, VOLATILE_SUM_LOW = 775;
 const DEFAULT_SYSTEM_CONFIG = {
@@ -1245,8 +1245,10 @@ async function syncData(manual){
     let rows = null, via = ''; const errs = [];
     let targets = SYNC_TARGETS;
     if(/^https?:$/.test(location.protocol)){
-      targets = (location.hostname === '127.0.0.1' || location.hostname === 'localhost')
-        ? [['本机服务取数', 'kl8data']].concat(SYNC_TARGETS) : SYNC_TARGETS.slice();
+      const local = (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
+      targets = local
+        ? [['本机服务取数', 'kl8data'], ['本站镜像', 'kl8_desc.txt']].concat(SYNC_TARGETS)
+        : [['本站镜像', 'kl8_desc.txt']].concat(SYNC_TARGETS);
       if(location.protocol === 'https:') targets = targets.filter(t => t[1].indexOf('http://') !== 0);
     }
     for(const [name, u] of targets){
